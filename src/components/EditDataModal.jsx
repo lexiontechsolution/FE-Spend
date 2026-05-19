@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../App.jsx';
+import { useAuth, API_URL } from '../App.jsx';
 import { X, Pencil, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 
 export default function EditDataModal({ isOpen, onClose, onEditSuccess, transaction }) {
@@ -69,7 +69,7 @@ export default function EditDataModal({ isOpen, onClose, onEditSuccess, transact
     }
 
     try {
-      const response = await fetch(`/api/transactions/${transaction._id}`, {
+      const response = await fetch(`${API_URL}/api/transactions/${transaction._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

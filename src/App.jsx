@@ -12,7 +12,8 @@ export const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
 
 // API URL helper
-const API_URL = ''; // Proxied through Vite server configuration
+// API URL helper
+export const API_URL = import.meta.env.VITE_API_URL || 'https://be-spend-pozu.onrender.com';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -28,7 +29,7 @@ export default function App() {
       }
 
       try {
-        const response = await fetch('/api/auth/me', {
+        const response = await fetch(`${API_URL}/api/auth/me`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -55,7 +56,7 @@ export default function App() {
 
   // Auth Operations
   const login = async (email, password) => {
-    const response = await fetch('/api/auth/login', {
+    const response = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
@@ -74,7 +75,7 @@ export default function App() {
   };
 
   const register = async (name, email, password) => {
-    const response = await fetch('/api/auth/register', {
+    const response = await fetch(`${API_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password })

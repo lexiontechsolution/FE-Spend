@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../App.jsx';
+import { useAuth, API_URL } from '../App.jsx';
 import { 
   ArrowUpRight, 
   ArrowDownLeft, 
@@ -50,7 +50,7 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       // 1. Fetch dashboard stats
-      const statsRes = await fetch('/api/transactions/dashboard/stats', {
+      const statsRes = await fetch(`${API_URL}/api/transactions/dashboard/stats`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const statsData = await statsRes.json();
@@ -59,7 +59,7 @@ export default function Dashboard() {
       }
 
       // 2. Fetch latest 5 transactions
-      const transactionsRes = await fetch('/api/transactions?limit=5', {
+      const transactionsRes = await fetch(`${API_URL}/api/transactions?limit=5`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const transactionsData = await transactionsRes.json();
@@ -84,7 +84,7 @@ export default function Dashboard() {
     if (!window.confirm('Are you sure you want to delete this transaction?')) return;
     
     try {
-      const response = await fetch(`/api/transactions/${id}`, {
+      const response = await fetch(`${API_URL}/api/transactions/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

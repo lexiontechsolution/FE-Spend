@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../App.jsx';
+import { useAuth, API_URL } from '../App.jsx';
 import { Search, Download, Trash2, SlidersHorizontal, RefreshCcw, Pencil } from 'lucide-react';
 import EditDataModal from '../components/EditDataModal.jsx';
 
@@ -51,7 +51,7 @@ export default function Reports() {
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
 
-      const response = await fetch(`/api/transactions?${params.toString()}`, {
+      const response = await fetch(`${API_URL}/api/transactions?${params.toString()}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -102,7 +102,7 @@ export default function Reports() {
     if (!window.confirm('Are you sure you want to permanently delete this transaction ledger entry?')) return;
     
     try {
-      const response = await fetch(`/api/transactions/${id}`, {
+      const response = await fetch(`${API_URL}/api/transactions/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

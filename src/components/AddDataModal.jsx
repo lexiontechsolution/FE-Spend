@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../App.jsx';
+import { useAuth, API_URL } from '../App.jsx';
 import { X, PlusCircle, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 
 export default function AddDataModal({ isOpen, onClose, onAddSuccess }) {
@@ -57,7 +57,7 @@ export default function AddDataModal({ isOpen, onClose, onAddSuccess }) {
     }
 
     try {
-      const response = await fetch('/api/transactions', {
+      const response = await fetch(`${API_URL}/api/transactions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
