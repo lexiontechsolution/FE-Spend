@@ -103,7 +103,7 @@ export default function EditDataModal({ isOpen, onClose, onEditSuccess, transact
         
         <div className="modal-header">
           <h3 className="modal-title">
-            <Pencil size={20} style={{ color: '#3b82f6' }} />
+            <Pencil size={20} style={{ color: 'var(--color-primary)' }} />
             <span>Edit Transaction</span>
           </h3>
           <button className="btn-icon-only" onClick={onClose}>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../App.jsx';
+import { useAuth, ThemeToggle } from '../App.jsx';
 import { Wallet, Mail, Lock, User, AlertCircle, Shield, TrendingUp, Check } from 'lucide-react';
 
 export default function Login({ initialIsRegister = false }) {
@@ -57,8 +57,8 @@ export default function Login({ initialIsRegister = false }) {
     <div className="login-page-container">
       <style dangerouslySetInnerHTML={{__html: `
         .login-page-container {
-          background: #060913;
-          color: #f8fafc;
+          background: var(--bg-deep);
+          color: var(--text-primary);
           min-height: 100vh;
           font-family: 'Outfit', sans-serif;
           display: flex;
@@ -103,7 +103,7 @@ export default function Login({ initialIsRegister = false }) {
           font-weight: 800;
           line-height: 1.15;
           letter-spacing: -0.02em;
-          background: linear-gradient(135deg, #ffffff 40%, #a5b4fc 100%);
+          background: linear-gradient(135deg, var(--header-gradient-start) 40%, var(--header-gradient-end) 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
@@ -137,10 +137,10 @@ export default function Login({ initialIsRegister = false }) {
         .marketing-item-title {
           font-weight: 700;
           font-size: 1.1rem;
-          color: #fff;
+          color: var(--text-primary);
         }
         .marketing-item-desc {
-          color: #94a3b8;
+          color: var(--text-secondary);
           font-size: 0.95rem;
           line-height: 1.5;
           font-family: 'Inter', sans-serif;
@@ -153,13 +153,14 @@ export default function Login({ initialIsRegister = false }) {
           position: relative;
         }
         .login-glass-card {
-          background: rgba(15, 22, 42, 0.45);
-          border: 1px solid rgba(255, 255, 255, 0.03);
+          background: var(--bg-glass);
+          border: 1px solid var(--border-glass);
           border-radius: 24px;
           padding: 3rem 2.5rem;
-          box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.6);
+          box-shadow: var(--shadow-premium);
           position: relative;
-          backdrop-filter: blur(15px);
+          backdrop-filter: var(--blur-glass);
+          -webkit-backdrop-filter: var(--blur-glass);
         }
         .login-glass-card::before {
           content: '';
@@ -182,7 +183,7 @@ export default function Login({ initialIsRegister = false }) {
           font-size: 1.8rem;
           font-weight: 800;
           margin-bottom: 0.5rem;
-          color: #fff;
+          color: var(--text-primary);
         }
         .login-form-logo svg {
           stroke: #10b981;
@@ -190,7 +191,7 @@ export default function Login({ initialIsRegister = false }) {
         }
         .login-form-subtitle {
           text-align: center;
-          color: #64748b;
+          color: var(--text-muted);
           font-size: 0.95rem;
           margin-bottom: 2.25rem;
           font-family: 'Inter', sans-serif;
@@ -205,7 +206,7 @@ export default function Login({ initialIsRegister = false }) {
           filter: blur(120px);
           z-index: 0;
           pointer-events: none;
-          opacity: 0.35;
+          opacity: var(--blob-opacity);
         }
         .login-glow-blob-1 {
           top: 20%;
@@ -257,6 +258,7 @@ export default function Login({ initialIsRegister = false }) {
           ) : (
             <Link to="/signup" className="btn-landing-signup">Sign Up</Link>
           )}
+          <ThemeToggle />
         </div>
       </header>
 

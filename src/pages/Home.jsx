@@ -1,1093 +1,729 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Wallet, ArrowRight, Shield, BarChart3, Clock, Check, 
-  HelpCircle, TrendingUp, Coins, Layers, Settings, LayoutGrid, FileText, ChevronRight, Star
+  HelpCircle, TrendingUp, Coins, Layers, Settings, LayoutGrid, 
+  FileText, ChevronRight, Star, Sparkles, Play, Plus, ArrowUpRight, ArrowDownLeft
 } from 'lucide-react';
-import { useAuth } from '../App.jsx';
+import { useAuth, ThemeToggle } from '../App.jsx';
 
 export default function Home() {
   const { user } = useAuth();
   const location = useLocation();
 
-  // Scroll to section if arriving from another page with scrollTo state and set tab title
+  // Mock ledger playground state
+  const [mockTransactions, setMockTransactions] = useState([
+    { id: 1, category: 'Groceries', amount: 1250, type: 'expense', date: '2026-05-19' },
+    { id: 2, category: 'Freelance', amount: 18500, type: 'income', date: '2026-05-18' },
+    { id: 3, category: 'Utilities', amount: 3200, type: 'expense', date: '2026-05-17' }
+  ]);
+  const [playgroundAmount, setPlaygroundAmount] = useState('');
+  const [playgroundCategory, setPlaygroundCategory] = useState('Groceries');
+  const [playgroundType, setPlaygroundType] = useState('expense');
+
   useEffect(() => {
     document.title = "SpendTracker | Take Complete Control of Your Wealth";
-    if (location.state?.scrollTo) {
-      const section = document.getElementById(location.state.scrollTo);
-      if (section) {
-        setTimeout(() => {
-          section.scrollIntoView({ behavior: 'smooth' });
-        }, 150);
-      }
-    }
-  }, [location]);
-  
-  const handleScrollToPricing = (e) => {
-    const pricingSection = document.getElementById('pricing');
-    if (pricingSection) {
-      e.preventDefault();
-      pricingSection.scrollIntoView({ behavior: 'smooth' });
-    }
+    window.scrollTo(0, 0);
+  }, []);
+
+  const handleAddMockTransaction = (e) => {
+    e.preventDefault();
+    if (!playgroundAmount || parseFloat(playgroundAmount) <= 0) return;
+    const newTx = {
+      id: Date.now(),
+      category: playgroundCategory,
+      amount: parseFloat(playgroundAmount),
+      type: playgroundType,
+      date: new Date().toISOString().split('T')[0]
+    };
+    setMockTransactions([newTx, ...mockTransactions]);
+    setPlaygroundAmount('');
   };
 
+  // Math for playground
+  const totalIncome = mockTransactions
+    .filter(t => t.type === 'income')
+    .reduce((acc, curr) => acc + curr.amount, 0);
+  const totalExpense = mockTransactions
+    .filter(t => t.type === 'expense')
+    .reduce((acc, curr) => acc + curr.amount, 0);
+  const totalBalance = totalIncome - totalExpense;
+
   return (
-    <div className="landing-page">
+    <div className="landing-page-v3">
       <style dangerouslySetInnerHTML={{__html: `
-        /* Landing Page Base */
-        .landing-page {
-          background: #060913;
-          color: #f8fafc;
+        .landing-page-v3 {
+          background: var(--bg-deep);
+          color: var(--text-primary);
           min-height: 100vh;
           font-family: 'Outfit', sans-serif;
           overflow-x: hidden;
           position: relative;
         }
 
-        /* Animated Glowing Blobs */
-        .glow-blob {
+        /* Top-tier SaaS glowing background grid */
+        .grid-backdrop {
           position: absolute;
+          inset: 0;
+          background-image: 
+            linear-gradient(var(--border-glass) 1px, transparent 1px),
+            linear-gradient(90deg, var(--border-glass) 1px, transparent 1px);
+          background-size: 60px 60px;
+          background-position: center top;
+          mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, #000 70%, transparent 100%);
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        /* Premium Blobs */
+        .saas-blob {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(140px);
+          opacity: var(--blob-opacity);
+          pointer-events: none;
+          z-index: 0;
+        }
+        .saas-blob-purple {
+          top: -100px;
+          left: 15%;
+          width: 500px;
+          height: 500px;
+          background: radial-gradient(circle, #8b5cf6 0%, transparent 80%);
+        }
+        .saas-blob-green {
+          top: 15%;
+          right: 10%;
           width: 600px;
           height: 600px;
-          border-radius: 50%;
-          filter: blur(120px);
-          z-index: 0;
-          pointer-events: none;
-          opacity: 0.45;
-          mix-blend-mode: screen;
-        }
-        .glow-blob-1 {
-          top: -100px;
-          left: -100px;
-          background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, rgba(59, 130, 246, 0.05) 60%, transparent 100%);
-          animation: float-slow 25s infinite ease-in-out alternate;
-        }
-        .glow-blob-2 {
-          top: 40%;
-          right: -200px;
-          background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, rgba(16, 185, 129, 0.04) 60%, transparent 100%);
-          animation: float-slow 30s infinite ease-in-out alternate-reverse;
-        }
-        .glow-blob-3 {
-          bottom: -100px;
-          left: 10%;
-          background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, rgba(139, 92, 246, 0.03) 60%, transparent 100%);
-          animation: float-slow 20s infinite ease-in-out alternate;
+          background: radial-gradient(circle, #10b981 0%, transparent 80%);
         }
 
-        @keyframes float-slow {
-          0% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(60px, 100px) scale(1.15); }
-          100% { transform: translate(-40px, -60px) scale(0.9); }
-        }
-
-        /* Content Container */
-        .landing-content {
+        .landing-container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 0 1.5rem;
           position: relative;
           z-index: 10;
         }
 
-        /* Hero Badges & Typography */
-        .hero-section {
-          padding: 10rem 5% 5rem;
-          max-width: 1200px;
-          margin: 0 auto;
+        /* Hero */
+        .hero-v3 {
+          padding: 9rem 0 6rem;
           text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
         }
-        .hero-badge {
+        .announcement-badge {
           display: inline-flex;
           align-items: center;
           gap: 0.5rem;
           background: rgba(16, 185, 129, 0.06);
           color: #10b981;
-          padding: 0.6rem 1.35rem;
+          padding: 0.5rem 1.25rem;
           border-radius: 9999px;
           font-size: 0.85rem;
           font-weight: 600;
-          margin-bottom: 2rem;
           border: 1px solid rgba(16, 185, 129, 0.15);
-          backdrop-filter: blur(5px);
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+          margin-bottom: 2rem;
+          transition: all 0.3s ease;
         }
-        .hero-badge span.pill {
-          background: #10b981;
-          color: #060913;
-          padding: 0.15rem 0.5rem;
-          border-radius: 9999px;
-          font-size: 0.75rem;
-          font-weight: 800;
-          text-transform: uppercase;
+        .announcement-badge:hover {
+          background: rgba(16, 185, 129, 0.1);
+          transform: translateY(-1px);
         }
-        .hero-title {
+        .hero-title-v3 {
           font-size: 4.5rem;
           font-weight: 800;
           line-height: 1.1;
-          margin-bottom: 1.5rem;
           letter-spacing: -0.03em;
-          background: linear-gradient(135deg, #ffffff 40%, #a5b4fc 70%, #10b981 100%);
+          margin-bottom: 1.5rem;
+          background: linear-gradient(135deg, var(--header-gradient-start) 40%, var(--header-gradient-end) 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
-        .hero-desc {
-          font-size: 1.35rem;
-          color: #94a3b8;
-          max-width: 750px;
-          margin: 0 auto 3.5rem;
+        .hero-desc-v3 {
+          font-size: 1.25rem;
+          color: var(--text-secondary);
+          max-width: 650px;
           line-height: 1.6;
+          margin-bottom: 3rem;
           font-family: 'Inter', sans-serif;
         }
-        .hero-actions {
+        .hero-ctas {
           display: flex;
-          justify-content: center;
           align-items: center;
-          gap: 1.5rem;
+          gap: 1.25rem;
           margin-bottom: 6rem;
         }
-        .btn-hero-primary {
+        .btn-saas-primary {
           background: linear-gradient(135deg, #10b981 0%, #059669 100%);
           color: #fff;
-          text-decoration: none;
-          padding: 1.1rem 2.75rem;
+          padding: 0.95rem 2rem;
           border-radius: 12px;
           font-weight: 700;
-          font-size: 1.15rem;
-          box-shadow: 0 4px 25px rgba(16, 185, 129, 0.35);
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          display: flex;
+          font-size: 1rem;
+          text-decoration: none;
+          box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+          transition: all 0.3s ease;
+          display: inline-flex;
           align-items: center;
           gap: 0.5rem;
         }
-        .btn-hero-primary:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 8px 35px rgba(16, 185, 129, 0.5);
-        }
-        .btn-hero-secondary {
-          background: rgba(255, 255, 255, 0.02);
-          color: #fff;
-          text-decoration: none;
-          padding: 1.1rem 2.75rem;
-          border-radius: 12px;
-          font-weight: 700;
-          font-size: 1.15rem;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          transition: all 0.3s ease;
-          backdrop-filter: blur(5px);
-        }
-        .btn-hero-secondary:hover {
-          background: rgba(255, 255, 255, 0.06);
-          border-color: rgba(255, 255, 255, 0.2);
+        .btn-saas-primary:hover {
           transform: translateY(-2px);
+          box-shadow: 0 4px 25px rgba(16, 185, 129, 0.45);
+        }
+        .btn-saas-secondary {
+          background: var(--bg-glass);
+          color: var(--text-primary);
+          padding: 0.95rem 2rem;
+          border-radius: 12px;
+          font-weight: 600;
+          font-size: 1rem;
+          text-decoration: none;
+          border: 1px solid var(--border-glass);
+          transition: all 0.3s ease;
+        }
+        .btn-saas-secondary:hover {
+          background: var(--border-glass-hover);
+          border-color: var(--border-glass-hover);
         }
 
-        /* Trusted By Section */
-        .trusted-section {
+        /* Company Logo Wall */
+        .logo-wall {
+          width: 100%;
+          border-top: 1px solid var(--border-glass);
+          border-bottom: 1px solid var(--border-glass);
+          padding: 2.5rem 0;
+          margin-bottom: 6rem;
           text-align: center;
-          margin-bottom: 7rem;
         }
-        .trusted-title {
+        .logo-wall-title {
           font-size: 0.85rem;
-          color: #64748b;
+          font-weight: 700;
+          color: var(--text-muted);
           text-transform: uppercase;
-          letter-spacing: 0.15em;
-          margin-bottom: 2rem;
+          letter-spacing: 0.1em;
+          margin-bottom: 1.75rem;
         }
-        .trusted-logos {
+        .logo-grid {
           display: flex;
           justify-content: center;
           align-items: center;
           gap: 4rem;
-          opacity: 0.45;
           flex-wrap: wrap;
         }
-        .trusted-logo {
-          font-size: 1.25rem;
-          font-weight: 700;
+        .logo-item {
+          font-size: 1.3rem;
+          font-weight: 800;
+          color: var(--text-secondary);
+          opacity: 0.45;
           letter-spacing: -0.03em;
-          color: #f8fafc;
+          transition: all 0.3s ease;
           display: flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: 0.35rem;
+        }
+        .logo-item:hover {
+          opacity: 0.85;
+          color: var(--text-primary);
         }
 
-        /* Mockup Glassmorphic App Window */
-        .mockup-outer {
-          position: relative;
-          max-width: 1000px;
-          margin: 0 auto;
-          background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%);
-          border-radius: 24px;
-          padding: 4px;
-          box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.7);
+        /* Grid Feature Cards */
+        .features-section {
+          margin-bottom: 8rem;
         }
-        .mockup-outer::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: 24px;
-          padding: 1px;
-          background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%, rgba(16,185,129,0.2) 100%);
-          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-          -webkit-mask-composite: xor;
-          mask-composite: exclude;
-          pointer-events: none;
+        .section-header-v3 {
+          text-align: center;
+          margin-bottom: 4rem;
         }
-        .mockup-container-v2 {
-          background: #090e1a;
-          border-radius: 20px;
-          overflow: hidden;
-          display: flex;
-          min-height: 520px;
-          text-align: left;
+        .section-tag-v3 {
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: var(--color-success);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          margin-bottom: 0.75rem;
+          display: block;
         }
-
-        /* Mockup Sidebar */
-        .mock-sidebar {
-          width: 220px;
-          background: #070a13;
-          border-right: 1px solid rgba(255,255,255,0.03);
-          padding: 1.5rem;
-          display: flex;
-          flex-direction: column;
+        .section-title-v3 {
+          font-size: 2.8rem;
+          font-weight: 800;
+          letter-spacing: -0.02em;
+          color: var(--text-primary);
+        }
+        .features-grid-v3 {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
           gap: 2rem;
         }
-        .mock-sidebar-brand {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-weight: 800;
+        .feature-card-v3 {
+          background: var(--bg-glass);
+          border: 1px solid var(--border-glass);
+          border-radius: 20px;
+          padding: 2.5rem;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          text-align: left;
+        }
+        .feature-card-v3:hover {
+          transform: translateY(-5px);
+          border-color: var(--border-glass-hover);
+          background: var(--bg-glass-bright);
+        }
+        .feature-icon-v3 {
+          width: 48px;
+          height: 48px;
+          background: rgba(16, 185, 129, 0.06);
+          border: 1px solid rgba(16, 185, 129, 0.15);
           color: #10b981;
-          font-size: 1.15rem;
-        }
-        .mock-menu {
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-        }
-        .mock-menu-item {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          padding: 0.65rem 0.75rem;
-          color: #64748b;
-          font-size: 0.9rem;
-          border-radius: 8px;
-          font-weight: 500;
-        }
-        .mock-menu-item.active {
-          color: #fff;
-          background: rgba(16, 185, 129, 0.08);
-          border-left: 2px solid #10b981;
-          border-radius: 0 8px 8px 0;
-          padding-left: 0.6rem;
-        }
-
-        /* Mockup Main panel */
-        .mock-main {
-          flex: 1;
-          padding: 2rem;
-          display: flex;
-          flex-direction: column;
-          gap: 1.5rem;
-          background: linear-gradient(180deg, #090e1a 0%, #060913 100%);
-        }
-        .mock-header-panel {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        .mock-profile {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-        }
-        .mock-avatar {
-          width: 32px;
-          height: 32px;
-          background: #10b981;
-          border-radius: 50%;
-          color: #060913;
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
+          margin-bottom: 1.5rem;
+        }
+        .feature-title-v3 {
+          font-size: 1.25rem;
           font-weight: 700;
-          font-size: 0.8rem;
+          color: var(--text-primary);
+          margin-bottom: 0.75rem;
+        }
+        .feature-desc-v3 {
+          font-size: 0.95rem;
+          color: var(--text-secondary);
+          line-height: 1.6;
+          font-family: 'Inter', sans-serif;
         }
 
-        /* Mock Metrics */
-        .mock-metrics {
+        /* Interactive Playground */
+        .playground-section {
+          margin-bottom: 8rem;
+        }
+        .playground-card {
+          background: var(--bg-glass-bright);
+          border: 1px solid var(--border-glass);
+          border-radius: 24px;
+          padding: 3rem;
+          backdrop-filter: var(--blur-glass);
+          display: grid;
+          grid-template-columns: 1fr 1.3fr;
+          gap: 3.5rem;
+          align-items: center;
+          text-align: left;
+          box-shadow: var(--shadow-premium);
+        }
+        .playground-info {
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+        .playground-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          color: #a5b4fc;
+          font-size: 0.85rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+        .playground-title {
+          font-size: 2.2rem;
+          font-weight: 800;
+          color: var(--text-primary);
+          line-height: 1.2;
+        }
+        .playground-desc {
+          font-size: 1rem;
+          color: var(--text-secondary);
+          line-height: 1.6;
+          font-family: 'Inter', sans-serif;
+        }
+
+        /* Mock App Layout inside Playground */
+        .mock-dashboard {
+          background: var(--bg-deep);
+          border: 1px solid var(--border-glass);
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: var(--shadow-premium);
+        }
+        .mock-db-header {
+          background: var(--bg-surface);
+          color: var(--text-primary);
+          padding: 1rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 1px solid var(--border-glass);
+          font-size: 0.9rem;
+          font-weight: 600;
+        }
+        .mock-db-grid {
+          padding: 1.25rem;
           display: grid;
           grid-template-columns: repeat(3, 1fr);
           gap: 1rem;
+          border-bottom: 1px solid var(--border-glass);
         }
-        .mock-card {
-          background: rgba(15, 22, 42, 0.4);
-          border: 1px solid rgba(255,255,255,0.03);
-          border-radius: 12px;
-          padding: 1.25rem;
-          position: relative;
+        .mock-indicator {
+          background: var(--bg-surface);
+          border: 1px solid var(--border-glass);
+          border-radius: 8px;
+          padding: 0.75rem;
+          font-size: 0.8rem;
+          color: var(--text-secondary);
         }
-        .mock-card::before {
-          content: '';
-          position: absolute;
-          left: 0;
-          top: 0;
-          bottom: 0;
-          width: 3px;
-          border-radius: 3px 0 0 3px;
-        }
-        .mock-card.income::before { background: #10b981; }
-        .mock-card.expense::before { background: #f43f5e; }
-        .mock-card.balance::before { background: #8b5cf6; }
-
-        .mock-card-label {
-          color: #64748b;
-          font-size: 0.75rem;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          margin-bottom: 0.35rem;
-        }
-        .mock-card-val {
-          font-size: 1.45rem;
+        .mock-indicator-val {
+          font-size: 1.15rem;
           font-weight: 700;
+          color: var(--text-primary);
+          margin-top: 0.25rem;
         }
-
-        /* Mock Chart Section */
-        .mock-chart-box {
-          background: rgba(15, 22, 42, 0.3);
-          border: 1px solid rgba(255,255,255,0.03);
-          border-radius: 12px;
+        .mock-db-workspace {
           padding: 1.25rem;
-          flex-grow: 1;
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
+          display: grid;
+          grid-template-columns: 1.1fr 1fr;
+          gap: 1.25rem;
         }
-        .mock-chart-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 0.85rem;
-          color: #64748b;
-        }
-        .mock-svg-chart {
-          width: 100%;
-          height: 120px;
-        }
-
-        /* Mock Transactions */
-        .mock-trans-list {
+        .mock-tx-list {
           display: flex;
           flex-direction: column;
           gap: 0.5rem;
+          max-height: 160px;
+          overflow-y: auto;
         }
-        .mock-trans-row {
+        .mock-tx-row {
+          background: var(--bg-surface);
+          border: 1px solid var(--border-glass);
+          padding: 0.5rem 0.75rem;
+          border-radius: 6px;
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 0.75rem 1rem;
-          background: rgba(255,255,255,0.01);
-          border-radius: 8px;
-          border: 1px solid rgba(255,255,255,0.02);
           font-size: 0.85rem;
         }
-        .mock-trans-left {
+        .mock-form {
           display: flex;
-          align-items: center;
+          flex-direction: column;
           gap: 0.75rem;
         }
-        .mock-trans-cat {
-          padding: 0.15rem 0.5rem;
-          border-radius: 4px;
-          font-size: 0.7rem;
-          font-weight: 600;
-          text-transform: uppercase;
-        }
-
-        /* Features Section */
-        .features-section {
-          padding: 8rem 5%;
-          max-width: 1200px;
-          margin: 0 auto;
-        }
-        .section-header {
+        
+        /* Final CTA Section */
+        .final-cta-section {
+          margin-bottom: 8rem;
           text-align: center;
-          margin-bottom: 5rem;
         }
-        .section-tag {
-          color: #10b981;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.15em;
-          margin-bottom: 0.75rem;
-          display: block;
-          font-size: 0.9rem;
+        .final-cta-card {
+          background: radial-gradient(circle at top left, rgba(16, 185, 129, 0.08) 0%, rgba(139, 92, 246, 0.03) 50%, transparent 100%), var(--bg-glass);
+          border: 1px solid var(--border-glass-hover);
+          border-radius: 28px;
+          padding: 4.5rem 2rem;
+          max-width: 900px;
+          margin: 0 auto;
+          box-shadow: var(--shadow-premium);
+          position: relative;
         }
-        .section-title {
+        .final-cta-title {
           font-size: 3rem;
           font-weight: 800;
+          color: var(--text-primary);
+          margin-bottom: 1.25rem;
           letter-spacing: -0.02em;
         }
-        .features-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-          gap: 2.5rem;
-        }
-        .feature-item-v2 {
-          background: rgba(15, 22, 42, 0.35);
-          border: 1px solid rgba(255, 255, 255, 0.03);
-          border-radius: 20px;
-          padding: 3rem 2.5rem;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          position: relative;
-          overflow: hidden;
-          backdrop-filter: blur(10px);
-        }
-        .feature-item-v2::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: 20px;
-          padding: 1.5px;
-          background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 60%);
-          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-          -webkit-mask-composite: xor;
-          mask-composite: exclude;
-          pointer-events: none;
-          transition: all 0.3s ease;
-        }
-        .feature-item-v2:hover {
-          transform: translateY(-5px);
-          background: rgba(15, 22, 42, 0.55);
-        }
-        .feature-item-v2:hover::before {
-          background: linear-gradient(180deg, rgba(16, 185, 129, 0.3) 0%, transparent 70%);
-        }
-        .feature-icon-v2 {
-          background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%);
-          color: #10b981;
-          width: 54px;
-          height: 54px;
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-bottom: 2rem;
-          border: 1px solid rgba(16, 185, 129, 0.25);
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-        }
-        .feature-name-v2 {
-          font-size: 1.4rem;
-          font-weight: 700;
-          margin-bottom: 1rem;
-          letter-spacing: -0.01em;
-        }
-        .feature-desc-v2 {
-          color: #94a3b8;
-          line-height: 1.7;
-          font-family: 'Inter', sans-serif;
-        }
-
-        /* Pricing Section */
-        .pricing-section {
-          padding: 8rem 5%;
-          max-width: 1200px;
-          margin: 0 auto;
-        }
-        .pricing-grid-v2 {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-          gap: 2.5rem;
-          align-items: stretch;
-        }
-        .pricing-card-v2 {
-          background: rgba(15, 22, 42, 0.3);
-          border: 1px solid rgba(255, 255, 255, 0.03);
-          border-radius: 24px;
-          padding: 3.5rem 2.5rem;
-          display: flex;
-          flex-direction: column;
-          position: relative;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          backdrop-filter: blur(10px);
-        }
-        .pricing-card-v2::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: 24px;
-          padding: 1px;
-          background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 60%);
-          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-          -webkit-mask-composite: xor;
-          mask-composite: exclude;
-          pointer-events: none;
-        }
-        .pricing-card-v2.premium {
-          background: linear-gradient(180deg, rgba(16, 185, 129, 0.05) 0%, rgba(15, 22, 42, 0.35) 100%);
-          border-color: rgba(16, 185, 129, 0.25);
-        }
-        .pricing-card-v2.premium::before {
-          background: linear-gradient(180deg, rgba(16, 185, 129, 0.35) 0%, transparent 60%);
-        }
-        .pricing-card-v2.premium::after {
-          content: 'RECOMMENDED';
-          position: absolute;
-          top: 1.5rem;
-          right: 1.5rem;
-          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-          color: #060913;
-          font-size: 0.75rem;
-          font-weight: 800;
-          padding: 0.35rem 1rem;
-          border-radius: 9999px;
-          letter-spacing: 0.08em;
-          box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25);
-        }
-        .pricing-card-v2:hover {
-          transform: translateY(-5px);
-        }
-        .plan-name-v2 {
-          font-size: 1.35rem;
-          font-weight: 700;
-          margin-bottom: 0.75rem;
-          color: #94a3b8;
-        }
-        .pricing-card-v2.premium .plan-name-v2 {
-          color: #10b981;
-        }
-        .plan-price-v2 {
-          font-size: 3.5rem;
-          font-weight: 800;
-          margin-bottom: 1.5rem;
-          display: flex;
-          align-items: baseline;
-          letter-spacing: -0.02em;
-        }
-        .plan-price-v2 span {
+        .final-cta-desc {
+          color: var(--text-secondary);
           font-size: 1.15rem;
-          color: #64748b;
-          font-weight: 500;
-          margin-left: 0.5rem;
-        }
-        .plan-desc-v2 {
-          color: #94a3b8;
-          margin-bottom: 2.5rem;
+          max-width: 550px;
+          margin: 0 auto 2.5rem;
           line-height: 1.6;
           font-family: 'Inter', sans-serif;
-          font-size: 0.95rem;
-        }
-        .plan-features-v2 {
-          list-style: none;
-          padding: 0;
-          margin: 0 0 3.5rem 0;
-          flex-grow: 1;
-          display: flex;
-          flex-direction: column;
-          gap: 1.25rem;
-        }
-        .plan-feature-item-v2 {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          color: #e2e8f0;
-          font-size: 0.95rem;
-          font-family: 'Inter', sans-serif;
-        }
-        .plan-feature-item-v2 svg {
-          color: #10b981;
-          flex-shrink: 0;
-        }
-        .btn-pricing-v2 {
-          display: block;
-          text-align: center;
-          text-decoration: none;
-          padding: 1.1rem;
-          border-radius: 12px;
-          font-weight: 700;
-          transition: all 0.3s ease;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          color: #fff;
-          font-size: 1.05rem;
-          background: rgba(255, 255, 255, 0.01);
-        }
-        .btn-pricing-v2.primary {
-          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-          border: none;
-          box-shadow: 0 4px 20px rgba(16, 185, 129, 0.2);
-        }
-        .btn-pricing-v2:hover {
-          background: rgba(255, 255, 255, 0.06);
-          border-color: rgba(255, 255, 255, 0.2);
-          transform: translateY(-2px);
-        }
-        .btn-pricing-v2.primary:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 30px rgba(16, 185, 129, 0.35);
-        }
-
-        /* FAQ Section */
-        .faq-section {
-          padding: 8rem 5%;
-          max-width: 1000px;
-          margin: 0 auto;
-        }
-        .faq-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 2.5rem;
-        }
-        .faq-item {
-          background: rgba(15, 22, 42, 0.25);
-          border: 1px solid rgba(255, 255, 255, 0.03);
-          border-radius: 16px;
-          padding: 2.25rem;
-          backdrop-filter: blur(5px);
-        }
-        .faq-q {
-          font-size: 1.15rem;
-          font-weight: 700;
-          margin-bottom: 0.75rem;
-          color: #fff;
-          display: flex;
-          gap: 0.75rem;
-          align-items: flex-start;
-        }
-        .faq-q svg {
-          color: #10b981;
-          flex-shrink: 0;
-          margin-top: 0.15rem;
-        }
-        .faq-a {
-          color: #94a3b8;
-          line-height: 1.6;
-          font-family: 'Inter', sans-serif;
-          font-size: 0.95rem;
-          padding-left: 2rem;
-        }
-
-        /* Footer */
-        .landing-footer-v2 {
-          border-top: 1px solid rgba(255,255,255,0.03);
-          padding: 6rem 5% 4rem;
-          background: #05070f;
-        }
-        .footer-cols {
-          max-width: 1200px;
-          margin: 0 auto;
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 4rem;
-          margin-bottom: 4rem;
-          text-align: left;
-        }
-        .footer-col-brand {
-          grid-column: span 1.5;
-        }
-        .footer-desc-text {
-          color: #64748b;
-          font-size: 0.95rem;
-          line-height: 1.6;
-          margin-top: 1.5rem;
-          max-width: 320px;
-        }
-        .footer-col h4 {
-          font-size: 0.95rem;
-          color: #fff;
-          margin-bottom: 1.5rem;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-        }
-        .footer-links {
-          display: flex;
-          flex-direction: column;
-          gap: 0.85rem;
-        }
-        .footer-link {
-          color: #64748b;
-          text-decoration: none;
-          font-size: 0.95rem;
-          transition: color 0.3s ease;
-        }
-        .footer-link:hover {
-          color: #10b981;
-        }
-        .footer-bottom {
-          max-width: 1200px;
-          margin: 0 auto;
-          border-top: 1px solid rgba(255,255,255,0.03);
-          padding-top: 2rem;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          color: #64748b;
-          font-size: 0.9rem;
         }
 
         @media (max-width: 900px) {
-          .hero-title {
-            font-size: 3rem;
+          .hero-title-v3 {
+            font-size: 2.8rem;
           }
-          .hero-desc {
-            font-size: 1.15rem;
+          .logo-grid {
+            gap: 2rem;
           }
-          .footer-cols {
-            grid-template-columns: 1fr 1fr;
-            gap: 3rem;
-          }
-          .footer-col-brand {
-            grid-column: span 2;
-          }
-          .faq-grid {
+          .features-grid-v3 {
             grid-template-columns: 1fr;
           }
-        }
-        @media (max-width: 768px) {
-          .mockup-container-v2 {
-            flex-direction: column;
-            min-height: auto;
+          .playground-card {
+            grid-template-columns: 1fr;
+            padding: 2rem 1.5rem;
+            gap: 2rem;
           }
-          .mock-sidebar {
-            width: 100%;
-            border-right: none;
-            border-bottom: 1px solid rgba(255,255,255,0.03);
-          }
-          .mock-metrics {
+          .mock-db-workspace {
             grid-template-columns: 1fr;
           }
+          .final-cta-title {
+            font-size: 2.2rem;
+          }
         }
+
+
       `}} />
 
-      {/* Decorative Blobs */}
-      <div className="glow-blob glow-blob-1" />
-      <div className="glow-blob glow-blob-2" />
-      <div className="glow-blob glow-blob-3" />
+      {/* Decorative Grids */}
+      <div className="grid-backdrop" />
+      <div className="saas-blob saas-blob-purple" />
+      <div className="saas-blob saas-blob-green" />
 
-      <div className="landing-content">
-        <header className="landing-header">
-          <Link to="/" className="landing-logo">
-            <Wallet size={28} />
-            <span>SpendTracker</span>
-          </Link>
-          <nav className="landing-nav">
-            <a href="#features" onClick={(e) => {
-              e.preventDefault();
-              document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-            }} className="nav-item">Features</a>
-            <a href="#pricing" onClick={handleScrollToPricing} className="nav-item">Pricing</a>
-            <a href="#faq" onClick={(e) => {
-              e.preventDefault();
-              document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
-            }} className="nav-item">FAQ</a>
-          </nav>
-          <div className="header-actions">
-            {user ? (
-              <Link to="/dashboard" className="btn-landing-signup">Go to Dashboard</Link>
-            ) : (
-              <>
-                <Link to="/login" className="btn-landing-login">Login</Link>
-                <Link to="/signup" className="btn-landing-signup">Sign Up</Link>
-              </>
-            )}
-          </div>
-        </header>
+      {/* Global Fixed Navbar */}
+      <header className="landing-header">
+        <Link to="/" className="landing-logo">
+          <Wallet size={28} />
+          <span>SpendTracker</span>
+        </Link>
+        <nav className="landing-nav">
+          <Link to="/" className="nav-item active">Product</Link>
+          <Link to="/pricing" className="nav-item">Pricing</Link>
+          <Link to="/contact" className="nav-item">Contact</Link>
+        </nav>
+        <div className="header-actions">
+          {user ? (
+            <Link to="/dashboard" className="btn-landing-login" style={{ background: '#10b981', color: '#fff', border: 'none' }}>Go to Dashboard</Link>
+          ) : (
+            <>
+              <Link to="/login" className="btn-landing-login">Login</Link>
+              <Link to="/signup" className="btn-landing-signup">Sign Up</Link>
+            </>
+          )}
+          <ThemeToggle />
+        </div>
+      </header>
 
-        <main className="hero-section">
-          <div className="hero-badge">
-            <span className="pill">New</span>
-            <span>Version 2.0 Real-time MongoDB Cloud Sync</span>
+      {/* Hero V3 */}
+      <div className="landing-container">
+        <section className="hero-v3">
+          <div className="announcement-badge">
+            <Sparkles size={14} />
+            <span>Now with multi-device cloud synchronization</span>
           </div>
-          <h1 className="hero-title">Take Complete Control<br />of Your Financial Destiny.</h1>
-          <p className="hero-desc">
-            SpendTracker is a high-performance visual ledger and metrics suite designed to log transactions, inspect categories, and optimize cash flow in real-time.
+          <h1 className="hero-title-v3">The premium ledger<br />for modern builders</h1>
+          <p className="hero-desc-v3">
+            SpendTracker is a high-performance metrics dashboard designed to log transactions, inspect categories, and optimize capital velocity in real-time.
           </p>
-          <div className="hero-actions">
-            {user ? (
-              <Link to="/dashboard" className="btn-hero-primary">
-                <span>Go to Dashboard</span>
-                <ArrowRight size={18} />
-              </Link>
-            ) : (
-              <Link to="/signup" className="btn-hero-primary">
-                <span>Get Started Free</span>
-                <ArrowRight size={18} />
-              </Link>
-            )}
-            <a href="#pricing" onClick={handleScrollToPricing} className="btn-hero-secondary">View Pricing</a>
+          <div className="hero-ctas">
+            <Link to="/signup" className="btn-saas-primary">
+              Get Started Free <ArrowRight size={18} />
+            </Link>
+            <Link to="/pricing" className="btn-saas-secondary">
+              View Pricing
+            </Link>
           </div>
 
-          {/* Interactive Window Mockup */}
-          <div className="mockup-outer">
-            <div className="mockup-container-v2">
-              {/* Sidebar */}
-              <div className="mock-sidebar">
-                <div className="mock-sidebar-brand">
-                  <Wallet size={20} />
-                  <span>SpendTracker</span>
+          {/* Company Logo Wall */}
+          <div className="logo-wall">
+            <div className="logo-wall-title">Empowering financial clarity at top companies</div>
+            <div className="logo-grid">
+              <span className="logo-item"><Wallet size={18} /> Stripe</span>
+              <span className="logo-item"><Sparkles size={18} /> Vercel</span>
+              <span className="logo-item"><TrendingUp size={18} /> Linear</span>
+              <span className="logo-item"><Layers size={18} /> Supabase</span>
+              <span className="logo-item"><Settings size={18} /> Retool</span>
+            </div>
+          </div>
+        </section>
+
+        {/* Feature Grid */}
+        <section className="features-section">
+          <div className="section-header-v3">
+            <span className="section-tag-v3">Features</span>
+            <h2 className="section-title-v3">Built to accelerate financial insights</h2>
+          </div>
+          <div className="features-grid-v3">
+            <div className="feature-card-v3">
+              <div className="feature-icon-v3">
+                <TrendingUp size={22} />
+              </div>
+              <h3 className="feature-title-v3">Capital Velocity Analytics</h3>
+              <p className="feature-desc-v3">
+                Watch your progression indicators grow month-over-month with high-fidelity charts and interactive wealth indexes.
+              </p>
+            </div>
+
+            <div className="feature-card-v3">
+              <div className="feature-icon-v3">
+                <Shield size={22} />
+              </div>
+              <h3 className="feature-title-v3">Strict Category Checks</h3>
+              <p className="feature-desc-v3">
+                Never look back at a blank receipt. Core form validators require descriptions when choosing 'Others'.
+              </p>
+            </div>
+
+            <div className="feature-card-v3">
+              <div className="feature-icon-v3">
+                <Coins size={22} />
+              </div>
+              <h3 className="feature-title-v3">Indian Rupee Native</h3>
+              <p className="feature-desc-v3">
+                All data, tables, inputs, and indicators formatted natively in Indian Currency (₹) for transparent tracking.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Interactive Playground */}
+        <section className="playground-section">
+          <div className="playground-card">
+            <div className="playground-info">
+              <div className="playground-badge">
+                <Play size={12} fill="currentColor" />
+                <span>Interactive Sandbox</span>
+              </div>
+              <h2 className="playground-title">Test-drive the ledger before signing up</h2>
+              <p className="playground-desc">
+                Log a simulated transaction on the right. See how the balance, expense tags, and transactional logs calculate updates in real-time.
+              </p>
+            </div>
+
+            <div className="mock-dashboard">
+              <div className="mock-db-header">
+                <span>⚡ Live Playground Ledger</span>
+                <span style={{ color: '#10b981', display: 'flex', align: 'center', gap: '0.25rem' }}>
+                  <span style={{ width: '8px', height: '8px', background: '#10b981', borderRadius: '50%', display: 'inline-block', alignSelf: 'center' }} />
+                  Synced
+                </span>
+              </div>
+
+              <div className="mock-db-grid">
+                <div className="mock-indicator">
+                  <span>Net Assets</span>
+                  <div className="mock-indicator-val" style={{ color: totalBalance >= 0 ? '#10b981' : '#f43f5e' }}>
+                    ₹{totalBalance.toLocaleString('en-IN')}
+                  </div>
                 </div>
-                <div className="mock-menu">
-                  <div className="mock-menu-item active">
-                    <LayoutGrid size={16} />
-                    <span>Dashboard</span>
+                <div className="mock-indicator">
+                  <span>Inflows</span>
+                  <div className="mock-indicator-val" style={{ color: '#3b82f6' }}>
+                    ₹{totalIncome.toLocaleString('en-IN')}
                   </div>
-                  <div className="mock-menu-item">
-                    <FileText size={16} />
-                    <span>Ledger Entries</span>
-                  </div>
-                  <div className="mock-menu-item">
-                    <TrendingUp size={16} />
-                    <span>Visual Analytics</span>
-                  </div>
-                  <div className="mock-menu-item">
-                    <Settings size={16} />
-                    <span>Config Settings</span>
+                </div>
+                <div className="mock-indicator">
+                  <span>Outflows</span>
+                  <div className="mock-indicator-val" style={{ color: '#f43f5e' }}>
+                    ₹{totalExpense.toLocaleString('en-IN')}
                   </div>
                 </div>
               </div>
 
-              {/* Main Panel */}
-              <div className="mock-main">
-                <div className="mock-header-panel">
-                  <div style={{ fontWeight: 700, fontSize: '1.15rem' }}>Financial Overview</div>
-                  <div className="mock-profile">
-                    <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Sanjay</span>
-                    <div className="mock-avatar">S</div>
-                  </div>
-                </div>
-
-                {/* Metrics */}
-                <div className="mock-metrics">
-                  <div className="mock-card income">
-                    <div className="mock-card-label">Monthly Income</div>
-                    <div className="mock-card-val" style={{ color: '#10b981' }}>₹1,24,500</div>
-                  </div>
-                  <div className="mock-card expense">
-                    <div className="mock-card-label">Monthly Burn</div>
-                    <div className="mock-card-val" style={{ color: '#f43f5e' }}>₹42,800</div>
-                  </div>
-                  <div className="mock-card balance">
-                    <div className="mock-card-label">Net Balance</div>
-                    <div className="mock-card-val" style={{ color: '#8b5cf6' }}>₹81,700</div>
-                  </div>
-                </div>
-
-                {/* SVG Mini Chart */}
-                <div className="mock-chart-box">
-                  <div className="mock-chart-header">
-                    <span style={{ fontWeight: 600 }}>Wealth Progression Index</span>
-                    <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <TrendingUp size={12} /> +12.4%
-                    </span>
-                  </div>
-                  <svg className="mock-svg-chart" viewBox="0 0 100 30" preserveAspectRatio="none">
-                    <defs>
-                      <linearGradient id="chartGlow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
-                        <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-                      </linearGradient>
-                    </defs>
-                    {/* Grid Lines */}
-                    <line x1="0" y1="10" x2="100" y2="10" stroke="rgba(255,255,255,0.03)" strokeWidth="0.5" />
-                    <line x1="0" y1="20" x2="100" y2="20" stroke="rgba(255,255,255,0.03)" strokeWidth="0.5" />
-                    {/* Shadow Area */}
-                    <path d="M 0 25 Q 20 12 40 18 T 80 8 T 100 5 L 100 30 L 0 30 Z" fill="url(#chartGlow)" />
-                    {/* Main Line */}
-                    <path d="M 0 25 Q 20 12 40 18 T 80 8 T 100 5" fill="none" stroke="#10b981" strokeWidth="1.2" />
-                    {/* Glowing dots */}
-                    <circle cx="100" cy="5" r="1.5" fill="#10b981" />
-                    <circle cx="40" cy="18" r="1" fill="#8b5cf6" />
-                  </svg>
-                </div>
-
-                {/* Transactions */}
-                <div className="mock-trans-list">
-                  <div className="mock-trans-row">
-                    <div className="mock-trans-left">
-                      <span className="mock-trans-cat" style={{ background: 'rgba(16,185,129,0.15)', color: '#10b981' }}>Salary</span>
-                      <span style={{ fontWeight: 600 }}>Freelance Retainer</span>
+              <div className="mock-db-workspace">
+                <div className="mock-tx-list">
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Recent Logs</div>
+                  {mockTransactions.map(tx => (
+                    <div className="mock-tx-row" key={tx.id}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {tx.type === 'income' ? <ArrowUpRight size={14} style={{ color: '#10b981' }} /> : <ArrowDownLeft size={14} style={{ color: '#f43f5e' }} />}
+                        <span>{tx.category}</span>
+                      </div>
+                      <span style={{ fontWeight: 600, color: tx.type === 'income' ? '#10b981' : '#fff' }}>
+                        {tx.type === 'income' ? '+' : '-'}₹{tx.amount.toLocaleString('en-IN')}
+                      </span>
                     </div>
-                    <span style={{ color: '#10b981', fontWeight: 700 }}>+₹85,000</span>
-                  </div>
-                  <div className="mock-trans-row">
-                    <div className="mock-trans-left">
-                      <span className="mock-trans-cat" style={{ background: 'rgba(244,63,94,0.15)', color: '#f43f5e' }}>Others</span>
-                      <span style={{ fontWeight: 600 }}>Server Subscription</span>
-                    </div>
-                    <span style={{ color: '#f43f5e', fontWeight: 700 }}>-₹3,200</span>
-                  </div>
+                  ))}
                 </div>
-              </div>
-            </div>
-          </div>
-        </main>
 
-        {/* Social Proof */}
-        <section className="trusted-section">
-          <h3 className="trusted-title">Synchronized with Modern Standards</h3>
-          <div className="trusted-logos">
-            <span className="trusted-logo"><Coins size={18} /> React 18</span>
-            <span className="trusted-logo"><Layers size={18} /> Vite Bundler</span>
-            <span className="trusted-logo"><Star size={18} /> MongoDB Atlas</span>
-            <span className="trusted-logo"><Shield size={18} /> JWT Auth</span>
-          </div>
-        </section>
+                <form onSubmit={handleAddMockTransaction} className="mock-form">
+                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                    <input
+                      type="number"
+                      placeholder="Amount (₹)"
+                      value={playgroundAmount}
+                      onChange={(e) => setPlaygroundAmount(e.target.value)}
+                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '6px', color: '#fff', padding: '0.35rem 0.5rem', width: '100%', fontSize: '0.8rem' }}
+                      required
+                    />
+                    <select
+                      value={playgroundType}
+                      onChange={(e) => {
+                        setPlaygroundType(e.target.value);
+                        setPlaygroundCategory(e.target.value === 'income' ? 'Salary' : 'Groceries');
+                      }}
+                      style={{ background: '#0e1528', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '6px', color: '#fff', fontSize: '0.8rem', padding: '0.35rem' }}
+                    >
+                      <option value="expense">Out</option>
+                      <option value="income">In</option>
+                    </select>
+                  </div>
+                  
+                  <select
+                    value={playgroundCategory}
+                    onChange={(e) => setPlaygroundCategory(e.target.value)}
+                    style={{ background: '#0e1528', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '6px', color: '#fff', fontSize: '0.8rem', padding: '0.35rem', width: '100%' }}
+                  >
+                    {playgroundType === 'expense' 
+                      ? ['Groceries', 'Rent', 'Transport', 'Utilities', 'Shopping', 'Others'].map(c => <option key={c} value={c}>{c}</option>)
+                      : ['Salary', 'Investments', 'Freelance', 'Others'].map(c => <option key={c} value={c}>{c}</option>)
+                    }
+                  </select>
 
-        {/* Features Grid */}
-        <section className="features-section" id="features">
-          <div className="section-header">
-            <span className="section-tag">High Fidelity Features</span>
-            <h2 className="section-title">Engineered for Absolute Transparency</h2>
-          </div>
-          <div className="features-grid">
-            <div className="feature-item-v2">
-              <div className="feature-icon-v2">
-                <BarChart3 size={24} />
+                  <button
+                    type="submit"
+                    style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none', color: '#fff', fontWeight: 700, padding: '0.45rem', borderRadius: '6px', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}
+                  >
+                    <Plus size={14} /> Add Transaction
+                  </button>
+                </form>
               </div>
-              <h3 className="feature-name-v2">Dynamic Visual Reports</h3>
-              <p className="feature-desc-v2">
-                Get high-resolution graphs representing monthly allocations, trends, and categorical saving insights instantly.
-              </p>
-            </div>
-
-            <div className="feature-item-v2">
-              <div className="feature-icon-v2">
-                <Shield size={24} />
-              </div>
-              <h3 className="feature-name-v2">Secure Multi-User Space</h3>
-              <p className="feature-desc-v2">
-                Fully isolated cloud storage using JSON Web Tokens (JWT) and encrypted transport layers for safety.
-              </p>
-            </div>
-
-            <div className="feature-item-v2">
-              <div className="feature-icon-v2">
-                <Clock size={24} />
-              </div>
-              <h3 className="feature-name-v2">Frictionless Ledger CRUD</h3>
-              <p className="feature-desc-v2">
-                Instantly insert, modify, and delete transactions. Custom category checks warn you if remarks are missing.
-              </p>
             </div>
           </div>
         </section>
 
-        {/* Pricing Tiers */}
-        <section className="pricing-section" id="pricing">
-          <div className="section-header">
-            <span className="section-tag">Simple Pricing</span>
-            <h2 className="section-title">Honest Plans. No Hidden Traps.</h2>
-          </div>
-          <div className="pricing-grid-v2">
-            {/* Starter */}
-            <div className="pricing-card-v2">
-              <h3 className="plan-name-v2">Starter</h3>
-              <div className="plan-price-v2">₹0<span>/month</span></div>
-              <p className="plan-desc-v2">Ideal for individuals looking to get clear visibility on basic spending patterns.</p>
-              <ul className="plan-features-v2">
-                <li className="plan-feature-item-v2"><Check size={16} /> <span>Unlimited transactions</span></li>
-                <li className="plan-feature-item-v2"><Check size={16} /> <span>Monthly breakdown</span></li>
-                <li className="plan-feature-item-v2"><Check size={16} /> <span>MongoDB secure storage</span></li>
-              </ul>
-              <Link to="/signup" className="btn-pricing-v2">Get Started Free</Link>
-            </div>
-
-            {/* Pro Premium */}
-            <div className="pricing-card-v2 premium">
-              <h3 className="plan-name-v2">Pro Premium</h3>
-              <div className="plan-price-v2">₹199<span>/month</span></div>
-              <p className="plan-desc-v2">For professionals, builders, and creators who need detailed ledger analytics.</p>
-              <ul className="plan-features-v2">
-                <li className="plan-feature-item-v2"><Check size={16} /> <span>Everything in Starter</span></li>
-                <li className="plan-feature-item-v2"><Check size={16} /> <span>Custom category configurations</span></li>
-                <li className="plan-feature-item-v2"><Check size={16} /> <span>Detailed CSV data downloads</span></li>
-                <li className="plan-feature-item-v2"><Check size={16} /> <span>Advanced date filter tags</span></li>
-              </ul>
-              <Link to="/signup" className="btn-pricing-v2 primary">Upgrade to Pro</Link>
-            </div>
-
-            {/* Enterprise */}
-            <div className="pricing-card-v2">
-              <h3 className="plan-name-v2">Enterprise</h3>
-              <div className="plan-price-v2">₹499<span>/month</span></div>
-              <p className="plan-desc-v2">For agencies, partnerships, and teams managing collaborative wealth flows.</p>
-              <ul className="plan-features-v2">
-                <li className="plan-feature-item-v2"><Check size={16} /> <span>Everything in Pro Premium</span></li>
-                <li className="plan-feature-item-v2"><Check size={16} /> <span>Shared multi-user ledgers</span></li>
-                <li className="plan-feature-item-v2"><Check size={16} /> <span>Custom API webhooks</span></li>
-                <li className="plan-feature-item-v2"><Check size={16} /> <span>Priority support response</span></li>
-              </ul>
-              <a href="mailto:support@spendtracker.io" className="btn-pricing-v2">Contact Sales</a>
+        {/* Final CTA Card */}
+        <section className="final-cta-section">
+          <div className="final-cta-card">
+            <h2 className="final-cta-title">Ready to take control?</h2>
+            <p className="final-cta-desc">
+              Log transactions, calculate indicators, and optimize your wealth progression. Join builders tracking their resources with complete security.
+            </p>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link to="/signup" className="btn-saas-primary">Create Your Free Account</Link>
+              <Link to="/pricing" className="btn-saas-secondary">Explore Premium Plans</Link>
             </div>
           </div>
         </section>
-
-        {/* FAQ Section */}
-        <section className="faq-section" id="faq">
-          <div className="section-header">
-            <span className="section-tag">FAQ</span>
-            <h2 className="section-title">Frequently Asked Questions</h2>
-          </div>
-          <div className="faq-grid">
-            <div className="faq-item">
-              <h4 className="faq-q"><HelpCircle size={18} /> Is my data completely private?</h4>
-              <p className="faq-a">Yes. Your transactions are tied to your personal account via securely hashed JSON Web Tokens (JWT) and saved in isolated database partitions.</p>
-            </div>
-            <div className="faq-item">
-              <h4 className="faq-q"><HelpCircle size={18} /> Can I switch currencies?</h4>
-              <p className="faq-a">SpendTracker has been customized to fully support Indian Rupees (₹). All statistics and summaries default to INR representation.</p>
-            </div>
-            <div className="faq-item">
-              <h4 className="faq-q"><HelpCircle size={18} /> What happens when I export?</h4>
-              <p className="faq-a">Pro users can generate formatted CSV downloads containing full timestamps, categorizations, amounts, and descriptions of their ledger records.</p>
-            </div>
-            <div className="faq-item">
-              <h4 className="faq-q"><HelpCircle size={18} /> How does the 'Others' warning work?</h4>
-              <p className="faq-a">When selecting 'Others' as a category, the system enforces a strict validation rule requiring a description. This prevents blank, unidentifiable transactions.</p>
-            </div>
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="landing-footer-v2">
-          <div className="footer-cols">
-            <div className="footer-col-brand">
-              <Link to="/" className="landing-logo">
-                <Wallet size={24} />
-                <span>SpendTracker</span>
-              </Link>
-              <p className="footer-desc-text">
-                Providing ultimate clarity on individual and professional spending since 2026. Powered by React, Node.js, and MongoDB Atlas.
-              </p>
-            </div>
-            <div className="footer-col">
-              <h4>Product</h4>
-              <div className="footer-links">
-                <a href="#features" onClick={(e) => {
-                  e.preventDefault();
-                  document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-                }} className="footer-link">Features</a>
-                <a href="#pricing" onClick={handleScrollToPricing} className="footer-link">Pricing</a>
-                <a href="#faq" onClick={(e) => {
-                  e.preventDefault();
-                  document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
-                }} className="footer-link">FAQs</a>
-              </div>
-            </div>
-            <div className="footer-col">
-              <h4>Legal</h4>
-              <div className="footer-links">
-                <Link to="/login" className="footer-link">Privacy Policy</Link>
-                <Link to="/login" className="footer-link">Terms of Service</Link>
-                <Link to="/login" className="footer-link">Security Policies</Link>
-              </div>
-            </div>
-          </div>
-          <div className="footer-bottom">
-            <p>&copy; {new Date().getFullYear()} SpendTracker Inc. All rights reserved.</p>
-            <p>Made for financial transparency.</p>
-          </div>
-        </footer>
       </div>
+
+      {/* Footer */}
+      <footer className="landing-footer-v2">
+        <div className="footer-cols">
+          <div className="footer-col-brand">
+            <Link to="/" className="landing-logo">
+              <Wallet size={24} />
+              <span>SpendTracker</span>
+            </Link>
+            <p className="footer-desc-text">
+              Providing ultimate clarity on individual and professional spending since 2026. Powered by React, Node.js, and MongoDB Atlas.
+            </p>
+          </div>
+          <div className="footer-col">
+            <h4>Product</h4>
+            <div className="footer-links">
+              <Link to="/" className="footer-link">Home</Link>
+              <Link to="/pricing" className="footer-link">Pricing</Link>
+              <Link to="/contact" className="footer-link">Contact</Link>
+            </div>
+          </div>
+          <div className="footer-col">
+            <h4>Legal</h4>
+            <div className="footer-links">
+              <Link to="/login" className="footer-link">Privacy Policy</Link>
+              <Link to="/login" className="footer-link">Terms of Service</Link>
+              <Link to="/login" className="footer-link">Security Policies</Link>
+            </div>
+          </div>
+        </div>
+        <div className="footer-bottom">
+          <p>&copy; {new Date().getFullYear()} SpendTracker Inc. All rights reserved.</p>
+          <p>Made for financial transparency.</p>
+        </div>
+      </footer>
     </div>
   );
 }
